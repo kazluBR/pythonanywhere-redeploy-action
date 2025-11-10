@@ -32,7 +32,7 @@ def test_get_input_returns_value_from_env(mock_set_failed):
 def test_get_input_calls_set_failed_when_required_and_missing(mock_set_failed):
     """Should call set_failed when required input is missing."""
     os.environ.pop("INPUT_PASSWORD", None)
-    get_input("password", required=False)
+    get_input("password", required=True)
     mock_set_failed.assert_called_once_with("Input required and not supplied: password")
 
 
