@@ -109,16 +109,3 @@ jobs:
 | `domain_name`     | Domain name of the web app to be reloaded.                                                                    | No       | The first web app found. |
 | `framework_type`  | Application framework type.                                                                                   | No       | `django`                 |
 | `django_settings` | Custom Django settings module to be used for `manage.py` commands (e.g., `manage.py migrate --settings=...`). | No       |                          |
-
-## Project Structure
-
-The code has been refactored into Python modules for better organization:
-
-- `action.yml`: Defines the GitHub Action metadata.
-- `requirements.txt`: Python dependencies (`requests`).
-- `main.py`: Action entry point. Contains the main deployment logic, including orchestration of steps (setup, git pull, framework commands, reload).
-- `src/`: Directory containing the application logic.
-  - `src/frameworks.py`: Base `Framework` class and specific implementations (`DjangoFramework`, `FlaskFramework`).
-  - `src/github_utils.py`: Helper functions to interact with the GitHub Actions environment (inputs, error/info logs).
-  - `src/pa_client.py`: `PythonAnywhereClient` class for communication with the PythonAnywhere API (beta).
-  - `src/pa_utils.py`: `PythonAnywhereUtils` class for common utility functions (setup, checks).
