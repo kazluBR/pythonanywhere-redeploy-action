@@ -1,0 +1,52 @@
+name: "Pythonanywhere Re-Deploy WebApp"
+description: "GitHub action to re-deploy a webapp on pythonanywhere"
+inputs:
+  host:
+    description: "Pythonanywhere host"
+    required: true
+  username:
+    description: "Pythonanywhere username"
+    required: true
+  api_token:
+    description: "Pythonanywhere API token"
+    required: true
+  domain_name:
+    description: "Domain name of the webapp"
+    required: false
+  framework_type:
+    description: "Framework type (django or flask)"
+    required: false
+    default: "django"
+  django_settings:
+    description: "Custom Django settings module to use for manage.py commands"
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r ${{ github.action_path }}/requirements.txt
+
+    - name: Run Python script
+      shell: bash
+      env:
+        PYTHONPATH: ${{ github.action_path }}
+        INPUT_HOST: ${{ inputs.host }}
+        INPUT_USERNAME: ${{ inputs.username }}
+        INPUT_API_TOKEN: ${{ inputs.api_token }}
+        INPUT_DOMAIN_NAME: ${{ inputs.domain_name }}
+        INPUT_FRAMEWORK_TYPE: ${{ inputs.framework_type }}
+        INPUT_DJANGO_SETTINGS: ${{ inputs.django_settings }}
+      run: python ${{ github.action_path }}/main.py
+
+branding:
+  icon: refresh-cw
+  color: green
