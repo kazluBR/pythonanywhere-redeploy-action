@@ -1,4 +1,4 @@
-name: "Pythonanywhere Re-Deploy WebApp"
+name: "Re-Deploy WebApp on PythonAnywhere"
 description: "GitHub action to re-deploy a webapp on pythonanywhere"
 inputs:
   host:

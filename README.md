@@ -88,7 +88,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to PythonAnywhere
+      - name: Re-Deploy WebApp on PythonAnywhere
         uses: kazluBR/pythonanywhere-redeploy-action@v1.0.0
         with:
           host: "www.pythonanywhere.com"                    # Required
