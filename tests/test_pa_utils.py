@@ -76,6 +76,48 @@ def test_check_git_pull_output_scenarios():
     result = PythonAnywhereUtils.check_git_pull_output({"output": ""})
     assert result == (True, None)
 
+@patch("src.pa_utils.info")
+def test_upload_env_file_sends_correct_command(mock_info, mock_client):
+    """Should build the .env content and send it to console."""
+
+    console_id = 123
+    web_app = {"source_directory": "/home/user/myapp"}
+    envs = {"DEBUG": "true", "SECRET": "abc123"}
+
+    PythonAnywhereUtils.upload_env_file(mock_client, console_id, web_app, envs)
+
+    env_content = ""
+    for key, value in envs.items():
+        escaped_value = value.replace("'", "'\\''")
+        env_content += f"{key}='{escaped_value}'\n"
+    expected_command = f"echo '{env_content}' > {web_app['source_directory']}/.env"
+
+    mock_client.send_input_to_console.assert_called_once_with(
+        console_id,
+        expected_command,
+        "'.env' file uploaded successfully."
+    )
+
+    mock_info.assert_any_call("Uploading .env file with provided environment variables...")
+    mock_info.assert_any_call("Environment variables written to .env file on PythonAnywhere.")
+
+
+@patch("src.pa_utils.info")
+def test_upload_env_file_escapes_single_quotes(mock_info, mock_client):
+    """Should escape single quotes inside values."""
+    console_id = 1
+    web_app = {"source_directory": "/home/user/app"}
+    envs = {"PASSWORD": "abc'def"}
+
+    PythonAnywhereUtils.upload_env_file(mock_client, console_id, web_app, envs)
+
+    assert mock_client.send_input_to_console.call_count == 1
+    _, upload_command, _ = mock_client.send_input_to_console.call_args[0]
+
+    assert "abc'\\''def" in upload_command
+
+    assert upload_command.startswith("echo '")
+    assert upload_command.endswith(f"' > {web_app['source_directory']}/.env")
 
 @patch("src.pa_utils.info")
 def test_parse_and_check_alembic_found(mock_info):

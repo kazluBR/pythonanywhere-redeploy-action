@@ -17,6 +17,7 @@ def run():
         domain_name = get_input("domain_name", required=False)
         framework_type = get_input("framework_type", required=False, default="django")
         django_settings = get_input("django_settings", required=False)
+        envs_string = get_input("envs", required=False)
 
         client = PythonAnywhereClient(username, api_token, host)
 
@@ -25,7 +26,27 @@ def run():
         console_id = _console["id"]
         web_app = PythonAnywhereUtils.setup_web_app(client, domain_name)
         
-        # 3. Git Pull
+        # 3. Upload .env file if envs are provided
+        if envs_string:
+            try:
+                envs_dict = {}
+                for line in envs_string.splitlines():
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    if '=' in line:
+                        key, value = line.split('=', 1)
+                        envs_dict[key.strip()] = value.strip()
+                
+                if envs_dict:
+                    PythonAnywhereUtils.upload_env_file(client, console_id, web_app, envs_dict)
+                else:
+                    info("Input 'envs' provided, but no valid KEY=VALUE pairs found. Skipping .env file upload.")
+
+            except Exception as e:
+                set_failed(f"Error processing 'envs' input: {e}")
+
+        # 4. Git Pull
         try:
             client.send_input_to_console(
                 console_id,
@@ -53,7 +74,7 @@ def run():
         except Exception as e:
             set_failed(e)
 
-        # 4. Framework Commands (Django/Flask)
+        # 5. Framework Commands (Django/Flask)
         info(f"Executing commands for the {framework_type.capitalize()} framework...")
         try:
             framework_executor = FrameworkFactory.create(
@@ -70,7 +91,7 @@ def run():
         except Exception as e:
             raise Exception(f"Error during console commands for {framework_type.capitalize()}: {e}")
 
-        # 5. Reload WebApp
+        # 6. Reload WebApp
         info(f"Reloading web app: {web_app['domain_name']}...")
         client.reload_webapp(web_app['domain_name'])
 

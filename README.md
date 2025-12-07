@@ -11,6 +11,7 @@ This is a custom GitHub Action to automate the re-deployment process for Python-
 - **Flask/Alembic Support:** Checks for the existence of `alembic.ini` and executes `alembic upgrade head` if found.
 - **Web App Reload:** Reloads the web application after deployment.
 - **Custom Settings (Django):** Allows specifying a custom settings module for `manage.py` commands via the `django_settings` input.
+- **Environment Variables (`.env`):** Allows passing a multi-line string environment variables (e.g., secrets) to be written to a `.env` file in the application's source directory on PythonAnywhere.
 
 ## PythonAnywhere Setup
 
@@ -91,21 +92,26 @@ jobs:
       - name: Re-Deploy WebApp on PythonAnywhere
         uses: kazluBR/pythonanywhere-redeploy-action@v1.0.0
         with:
-          host: "www.pythonanywhere.com"                    # Required
-          username: ${{ secrets.PA_USERNAME }}              # Required
-          api_token: ${{ secrets.PA_API_TOKEN }}            # Required
-          domain_name: your-application.pythonanywhere.com  # Optional, gets first webapp
-          framework_type: "django" or "flask"               # Optional, defaults to django
-          django_settings: "my_project.settings.production" # Optional
+          host: "www.pythonanywhere.com"                        # Required
+          username: ${{ secrets.PA_USERNAME }}                  # Required
+          api_token: ${{ secrets.PA_API_TOKEN }}                # Required
+          domain_name: your-application.pythonanywhere.com      # Optional, gets first webapp
+          framework_type: "django" or "flask"                   # Optional, defaults to django
+          django_settings: "my_project.settings.production"     # Optional
+          envs: |                                               # Optional, multi-line string of environment variables
+            DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
+            DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
 ```
 
 ## Inputs
 
-| Name              | Description                                                                                                   | Required | Default                  |
-| :---------------- | :------------------------------------------------------------------------------------------------------------ | :------- | :----------------------- |
-| `host`            | PythonAnywhere host (EU/US), e.g., `eu.pythonanywhere.com` or `www.pythonanywhere.com`.                       | Yes      |                          |
-| `username`        | PythonAnywhere username.                                                                                      | Yes      |                          |
-| `api_token`       | PythonAnywhere API token.                                                                                     | Yes      |                          |
-| `domain_name`     | Domain name of the web app to be reloaded.                                                                    | No       | The first web app found. |
-| `framework_type`  | Application framework type.                                                                                   | No       | `django`                 |
-| `django_settings` | Custom Django settings module to be used for `manage.py` commands (e.g., `manage.py migrate --settings=...`). | No       |                          |
+| Name              | Description                                                                                                                                                                                                      | Required | Default                  |
+| :---------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- | :----------------------- |
+| `host`            | PythonAnywhere host (EU/US), e.g., `eu.pythonanywhere.com` or `www.pythonanywhere.com`.                                                                                                                          | Yes      |                          |
+| `username`        | PythonAnywhere username.                                                                                                                                                                                         | Yes      |                          |
+| `api_token`       | PythonAnywhere API token.                                                                                                                                                                                        | Yes      |                          |
+| `domain_name`     | Domain name of the web app to be reloaded.                                                                                                                                                                       | No       | The first web app found. |
+| `framework_type`  | Application framework type.                                                                                                                                                                                      | No       | `django`                 |
+| `django_settings` | Custom Django settings module to be used for `manage.py` commands (e.g., `manage.py migrate --settings=...`).                                                                                                    | No       |                          |
+| `envs`            | Multi-line string of environment variables (KEY=VALUE) to be written to a `.env` file in the application's source directory on PythonAnywhere. **Use the `env` context or a multi-line string to pass secrets.** | No       |                          |
