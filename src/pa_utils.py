@@ -82,7 +82,11 @@ class PythonAnywhereUtils:
             env_content += f"{key}='{escaped_value}'\n"
 
         # The final command will be: echo 'KEY1=VALUE1\nKEY2=VALUE2\n' > /path/to/source/.env
-        upload_command = f"echo '{env_content}' > {web_app['source_directory']}/.env"
+        upload_command = (
+            f"cat > {web_app['source_directory']}/.env << 'EOF'\n"
+            f"{env_content}"
+            "EOF"
+        )
         
         client.send_input_to_console(
             console_id,
