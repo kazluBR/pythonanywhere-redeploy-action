@@ -79,7 +79,6 @@ def test_check_git_pull_output_scenarios():
 @patch("src.pa_utils.info")
 def test_upload_env_file_sends_correct_command(mock_info, mock_client):
     """Should build the .env content and send it to console."""
-
     console_id = 123
     web_app = {"source_directory": "/home/user/myapp"}
     envs = {"DEBUG": "true", "SECRET": "abc123"}
@@ -90,7 +89,12 @@ def test_upload_env_file_sends_correct_command(mock_info, mock_client):
     for key, value in envs.items():
         escaped_value = value.replace("'", "'\\''")
         env_content += f"{key}='{escaped_value}'\n"
-    expected_command = f"echo '{env_content}' > {web_app['source_directory']}/.env"
+
+    expected_command = (
+        f"cat > {web_app['source_directory']}/.env << 'EOF'\n"
+        f"{env_content}"
+        "EOF"
+    )
 
     mock_client.send_input_to_console.assert_called_once_with(
         console_id,
@@ -116,8 +120,8 @@ def test_upload_env_file_escapes_single_quotes(mock_info, mock_client):
 
     assert "abc'\\''def" in upload_command
 
-    assert upload_command.startswith("echo '")
-    assert upload_command.endswith(f"' > {web_app['source_directory']}/.env")
+    assert upload_command.startswith(f"cat > {web_app['source_directory']}/.env")
+    assert upload_command.endswith("EOF")
 
 @patch("src.pa_utils.info")
 def test_parse_and_check_alembic_found(mock_info):
