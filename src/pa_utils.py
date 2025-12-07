@@ -68,6 +68,31 @@ class PythonAnywhereUtils:
         return True, None
 
     @staticmethod
+    def upload_env_file(client: PythonAnywhereClient, console_id: int, web_app: Dict[str, Any], envs: Dict[str, str]):
+        """
+        Creates a .env file content and uploads it to the web app's source directory
+        using the console.
+        """
+        info("Uploading .env file with provided environment variables...")
+        
+        env_content = ""
+        for key, value in envs.items():
+            # Escape single quotes in the value to prevent command injection
+            escaped_value = value.replace("'", "'\\''")
+            env_content += f"{key}='{escaped_value}'\n"
+
+        # The final command will be: echo 'KEY1=VALUE1\nKEY2=VALUE2\n' > /path/to/source/.env
+        upload_command = f"echo '{env_content}' > {web_app['source_directory']}/.env"
+        
+        client.send_input_to_console(
+            console_id,
+            upload_command,
+            "'.env' file uploaded successfully."
+        )
+        
+        info("Environment variables written to .env file on PythonAnywhere.")
+
+    @staticmethod
     def parse_and_check_alembic(response: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
         """Checks the output of the alembic.ini search command."""
         output = response.get("output", "")

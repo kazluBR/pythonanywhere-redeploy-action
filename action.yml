@@ -20,6 +20,9 @@ inputs:
   django_settings:
     description: "Custom Django settings module to use for manage.py commands"
     required: false
+  envs:
+    description: "Multi-line string of environment variables (KEY=VALUE) to be written to a .env file"
+    required: false
 
 runs:
   using: "composite"
