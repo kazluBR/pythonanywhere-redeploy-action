@@ -77,9 +77,7 @@ class PythonAnywhereUtils:
         
         env_content = ""
         for key, value in envs.items():
-            # Escape single quotes in the value to prevent command injection
-            escaped_value = value.replace("'", "'\\''")
-            env_content += f"{key}='{escaped_value}'\n"
+            env_content += f"{key}={value}\n"
 
         # The final command will be: echo 'KEY1=VALUE1\nKEY2=VALUE2\n' > /path/to/source/.env
         upload_command = (
