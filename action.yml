@@ -48,6 +48,7 @@ runs:
         INPUT_DOMAIN_NAME: ${{ inputs.domain_name }}
         INPUT_FRAMEWORK_TYPE: ${{ inputs.framework_type }}
         INPUT_DJANGO_SETTINGS: ${{ inputs.django_settings }}
+        INPUT_ENVS: ${{ inputs.envs }}
       run: python ${{ github.action_path }}/main.py
 
 branding:
