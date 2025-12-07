@@ -18,7 +18,6 @@ def run():
         framework_type = get_input("framework_type", required=False, default="django")
         django_settings = get_input("django_settings", required=False)
         envs_string = get_input("envs", required=False)
-        info(f"Get 'envs' input: {envs_string}")
 
         client = PythonAnywhereClient(username, api_token, host)
 
