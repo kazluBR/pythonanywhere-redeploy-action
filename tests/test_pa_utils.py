@@ -87,8 +87,7 @@ def test_upload_env_file_sends_correct_command(mock_info, mock_client):
 
     env_content = ""
     for key, value in envs.items():
-        escaped_value = value.replace("'", "'\\''")
-        env_content += f"{key}='{escaped_value}'\n"
+        env_content += f"{key}={value}\n"
 
     expected_command = (
         f"cat > {web_app['source_directory']}/.env << 'EOF'\n"
@@ -107,8 +106,8 @@ def test_upload_env_file_sends_correct_command(mock_info, mock_client):
 
 
 @patch("src.pa_utils.info")
-def test_upload_env_file_escapes_single_quotes(mock_info, mock_client):
-    """Should escape single quotes inside values."""
+def test_upload_env_file_keeps_single_quotes_in_values(mock_info, mock_client):
+    """Should keep single quotes literally when writing to .env."""
     console_id = 1
     web_app = {"source_directory": "/home/user/app"}
     envs = {"PASSWORD": "abc'def"}
@@ -118,7 +117,8 @@ def test_upload_env_file_escapes_single_quotes(mock_info, mock_client):
     assert mock_client.send_input_to_console.call_count == 1
     _, upload_command, _ = mock_client.send_input_to_console.call_args[0]
 
-    assert "abc'\\''def" in upload_command
+    assert "abc'def" in upload_command
+    assert "abc'\\''def" not in upload_command
 
     assert upload_command.startswith(f"cat > {web_app['source_directory']}/.env")
     assert upload_command.endswith("EOF")
