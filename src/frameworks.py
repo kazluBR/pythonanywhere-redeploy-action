@@ -8,12 +8,13 @@ from .pa_utils import PythonAnywhereUtils
 class Framework(ABC):
     """Abstract base class for frameworks."""
     
-    def __init__(self, client: PythonAnywhereClient, console_id: int, web_app: Dict[str, Any]):
+    def __init__(self, client: PythonAnywhereClient, console_id: int, web_app: Dict[str, Any], dependency_manager: Optional[str] = "pip"):
         self.client = client
         self.console_id = console_id
         self.web_app = web_app
         self.source_directory = web_app['source_directory']
         self.virtualenv_path = web_app['virtualenv_path']
+        self.dependency_manager = dependency_manager
 
     @abstractmethod
     def run_commands(self):
@@ -22,39 +23,62 @@ class Framework(ABC):
 
     def _activate_venv(self):
         """Activates the virtual environment."""
-        self.client.send_input_to_console(
-            self.console_id,
-            f"source {self.virtualenv_path}/bin/activate",
-            "Virtual Environment Activated."
-        )
+        if self.dependency_manager == "pip":
+            self.client.send_input_to_console(
+                self.console_id,
+                f"source {self.virtualenv_path}/bin/activate",
+                "Virtual Environment Activated."
+            )
+        elif self.dependency_manager == "poetry":
+            info("Using Poetry, skipping manual virtualenv activation.")
+        else:
+            raise ValueError(f"Unsupported dependency manager: {self.dependency_manager}")
 
     def _install_requirements(self):
         """Installs the dependencies."""
-        self.client.send_input_to_console(
-            self.console_id,
-            f"pip install -r {self.source_directory}/requirements.txt",
-            "Dependencies Installed."
-        )
+        if self.dependency_manager == "pip":
+            self.client.send_input_to_console(
+                self.console_id,
+                f"pip install -r {self.source_directory}/requirements.txt",
+                "Dependencies Installed."
+            )
+        elif self.dependency_manager == "poetry":
+            self.client.send_input_to_console(
+                self.console_id,
+                f"cd {self.source_directory} && poetry install",
+                "Dependencies Installed with Poetry."
+            )
+        else:
+            raise ValueError(f"Unsupported dependency manager: {self.dependency_manager}")
 
 class DjangoFramework(Framework):
     """Implementation for the Django framework."""
 
-    def __init__(self, client: PythonAnywhereClient, console_id: int, web_app: Dict[str, Any], django_settings: Optional[str] = None):
-        super().__init__(client, console_id, web_app)
+    def __init__(self, client: PythonAnywhereClient, console_id: int, web_app: Dict[str, Any], django_settings: Optional[str] = None, dependency_manager: Optional[str] = "pip"):
+        super().__init__(client, console_id, web_app, dependency_manager)
         self.django_settings = django_settings
+        self.dependency_manager = dependency_manager
 
     def run_commands(self):
         try:
             self._activate_venv()
             self._install_requirements()
 
-            # Django migration command
             settings_arg = f' --settings={self.django_settings}' if self.django_settings else ''
+
+            if self.dependency_manager == "pip":
+                command = f"python {self.source_directory}/manage.py migrate{settings_arg}"
+            elif self.dependency_manager == "poetry":
+                command = f"cd {self.source_directory} && poetry run python manage.py migrate{settings_arg}"
+            else:
+                raise ValueError(f"Unsupported dependency manager: {self.dependency_manager}")
+
             self.client.send_input_to_console(
                 self.console_id,
-                f"python {self.source_directory}/manage.py migrate{settings_arg}",
+                command,
                 "Database Migrations Completed."
             )
+
         except Exception as e:
             raise Exception(f"Error during console commands for Django: {e}")
 

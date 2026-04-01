@@ -39,8 +39,8 @@ def test_factory_creates_flask(mock_client, web_app):
     assert isinstance(framework, FlaskFramework)
 
 
-def test_django_run_commands(mock_client, web_app):
-    """Should call expected Django console commands."""
+def test_django_run_commands_with_pip(mock_client, web_app):
+    """Should call expected Django console commands using pip."""
     django = DjangoFramework(mock_client, 1, web_app, django_settings="mysite.settings")
     django.run_commands()
 
@@ -49,6 +49,27 @@ def test_django_run_commands(mock_client, web_app):
     assert any("requirements.txt" in cmd for cmd in calls)
     assert any("manage.py migrate" in cmd for cmd in calls)
 
+def test_django_run_commands_with_poetry(mock_client, web_app):
+    """Should use poetry to install and run Django commands."""
+    django = DjangoFramework(
+        mock_client,
+        1,
+        web_app,
+        django_settings="mysite.settings",
+        dependency_manager="poetry"
+    )
+    django.run_commands()
+
+    calls = [call.args[1] for call in mock_client.send_input_to_console.call_args_list]
+    assert not any("activate" in cmd for cmd in calls)
+    assert any(
+        f"cd {web_app['source_directory']} && poetry install" in cmd
+        for cmd in calls
+    )
+    assert any(
+        "poetry run python manage.py migrate" in cmd
+        for cmd in calls
+    )
 
 @patch("src.frameworks.info")
 @patch.object(PythonAnywhereUtils, "parse_and_check_alembic", return_value=(True, "/home/user/myapp/migrations/alembic.ini"))
