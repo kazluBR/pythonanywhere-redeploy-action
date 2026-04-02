@@ -61,7 +61,7 @@ def test_django_run_commands_with_poetry(mock_client, web_app):
     django.run_commands()
 
     calls = [call.args[1] for call in mock_client.send_input_to_console.call_args_list]
-    assert not any("activate" in cmd for cmd in calls)
+    assert any("activate" in cmd for cmd in calls)
     assert any(
         f"cd {web_app['source_directory']} && poetry install" in cmd
         for cmd in calls

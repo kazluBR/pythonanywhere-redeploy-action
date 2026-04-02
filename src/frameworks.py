@@ -23,16 +23,11 @@ class Framework(ABC):
 
     def _activate_venv(self):
         """Activates the virtual environment."""
-        if self.dependency_manager == "pip":
-            self.client.send_input_to_console(
-                self.console_id,
-                f"source {self.virtualenv_path}/bin/activate",
-                "Virtual Environment Activated."
-            )
-        elif self.dependency_manager == "poetry":
-            info("Using Poetry, skipping manual virtualenv activation.")
-        else:
-            raise ValueError(f"Unsupported dependency manager: {self.dependency_manager}")
+        self.client.send_input_to_console(
+            self.console_id,
+            f"source {self.virtualenv_path}/bin/activate",
+            "Virtual Environment Activated."
+        )
 
     def _install_requirements(self):
         """Installs the dependencies."""
@@ -40,12 +35,18 @@ class Framework(ABC):
             self.client.send_input_to_console(
                 self.console_id,
                 f"pip install -r {self.source_directory}/requirements.txt",
-                "Dependencies Installed."
+                "Dependencies Installed with Pip."
             )
         elif self.dependency_manager == "poetry":
             self.client.send_input_to_console(
                 self.console_id,
-                f"cd {self.source_directory} && poetry install",
+                "poetry config virtualenvs.create false",
+                "Configuring Poetry to use system virtualenv..."
+            )
+            
+            self.client.send_input_to_console(
+                self.console_id,
+                f"cd {self.source_directory} && poetry install --only main --no-root",
                 "Dependencies Installed with Poetry."
             )
         else:
