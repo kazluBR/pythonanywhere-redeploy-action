@@ -55,28 +55,27 @@ class Framework(ABC):
 class DjangoFramework(Framework):
     """Implementation for the Django framework."""
 
-    def __init__(self, client: PythonAnywhereClient, console_id: int, web_app: Dict[str, Any], django_settings: Optional[str] = None, dependency_manager: Optional[str] = "pip"):
+    def __init__(
+        self,
+        client: PythonAnywhereClient,
+        console_id: int,
+        web_app: Dict[str, Any],
+        django_settings: Optional[str] = None,
+        dependency_manager: Optional[str] = "pip"
+    ):
         super().__init__(client, console_id, web_app, dependency_manager)
         self.django_settings = django_settings
-        self.dependency_manager = dependency_manager
 
     def run_commands(self):
         try:
             self._activate_venv()
             self._install_requirements()
 
+            # Django migration command
             settings_arg = f' --settings={self.django_settings}' if self.django_settings else ''
-
-            if self.dependency_manager == "pip":
-                command = f"python {self.source_directory}/manage.py migrate{settings_arg}"
-            elif self.dependency_manager == "poetry":
-                command = f"cd {self.source_directory} && poetry run python manage.py migrate{settings_arg}"
-            else:
-                raise ValueError(f"Unsupported dependency manager: {self.dependency_manager}")
-
             self.client.send_input_to_console(
                 self.console_id,
-                command,
+                f"python {self.source_directory}/manage.py migrate{settings_arg}",
                 "Database Migrations Completed."
             )
 

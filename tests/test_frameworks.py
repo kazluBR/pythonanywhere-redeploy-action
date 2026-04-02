@@ -63,13 +63,10 @@ def test_django_run_commands_with_poetry(mock_client, web_app):
     calls = [call.args[1] for call in mock_client.send_input_to_console.call_args_list]
     assert any("activate" in cmd for cmd in calls)
     assert any(
-        f"cd {web_app['source_directory']} && poetry install" in cmd
+        f"cd {web_app['source_directory']} && poetry install --only main --no-root" in cmd
         for cmd in calls
     )
-    assert any(
-        "poetry run python manage.py migrate" in cmd
-        for cmd in calls
-    )
+    assert any("manage.py migrate" in cmd for cmd in calls)
 
 @patch("src.frameworks.info")
 @patch.object(PythonAnywhereUtils, "parse_and_check_alembic", return_value=(True, "/home/user/myapp/migrations/alembic.ini"))
