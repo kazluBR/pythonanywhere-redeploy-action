@@ -8,12 +8,13 @@ from .pa_utils import PythonAnywhereUtils
 class Framework(ABC):
     """Abstract base class for frameworks."""
     
-    def __init__(self, client: PythonAnywhereClient, console_id: int, web_app: Dict[str, Any]):
+    def __init__(self, client: PythonAnywhereClient, console_id: int, web_app: Dict[str, Any], dependency_manager: Optional[str] = "pip"):
         self.client = client
         self.console_id = console_id
         self.web_app = web_app
         self.source_directory = web_app['source_directory']
         self.virtualenv_path = web_app['virtualenv_path']
+        self.dependency_manager = dependency_manager
 
     @abstractmethod
     def run_commands(self):
@@ -30,17 +31,39 @@ class Framework(ABC):
 
     def _install_requirements(self):
         """Installs the dependencies."""
-        self.client.send_input_to_console(
-            self.console_id,
-            f"pip install -r {self.source_directory}/requirements.txt",
-            "Dependencies Installed."
-        )
+        if self.dependency_manager == "pip":
+            self.client.send_input_to_console(
+                self.console_id,
+                f"pip install -r {self.source_directory}/requirements.txt",
+                "Dependencies Installed with Pip."
+            )
+        elif self.dependency_manager == "poetry":
+            self.client.send_input_to_console(
+                self.console_id,
+                "poetry config virtualenvs.create false",
+                "Configuring Poetry to use system virtualenv..."
+            )
+            
+            self.client.send_input_to_console(
+                self.console_id,
+                f"cd {self.source_directory} && poetry install --only main --no-root",
+                "Dependencies Installed with Poetry."
+            )
+        else:
+            raise ValueError(f"Unsupported dependency manager: {self.dependency_manager}")
 
 class DjangoFramework(Framework):
     """Implementation for the Django framework."""
 
-    def __init__(self, client: PythonAnywhereClient, console_id: int, web_app: Dict[str, Any], django_settings: Optional[str] = None):
-        super().__init__(client, console_id, web_app)
+    def __init__(
+        self,
+        client: PythonAnywhereClient,
+        console_id: int,
+        web_app: Dict[str, Any],
+        django_settings: Optional[str] = None,
+        dependency_manager: Optional[str] = "pip"
+    ):
+        super().__init__(client, console_id, web_app, dependency_manager)
         self.django_settings = django_settings
 
     def run_commands(self):
@@ -55,6 +78,7 @@ class DjangoFramework(Framework):
                 f"python {self.source_directory}/manage.py migrate{settings_arg}",
                 "Database Migrations Completed."
             )
+
         except Exception as e:
             raise Exception(f"Error during console commands for Django: {e}")
 

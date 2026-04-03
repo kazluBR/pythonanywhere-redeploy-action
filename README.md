@@ -6,7 +6,9 @@ This is a custom GitHub Action to automate the re-deployment process for Python-
 
 - **Secure Authentication:** Uses the PythonAnywhere API token for communication.
 - **Automated Git Pull:** Executes `git pull` in the application's directory on PythonAnywhere.
-- **Dependency Management:** Activates the virtual environment and installs dependencies via `pip install -r requirements.txt`.
+- **Dependency Management:** Supports both `pip` and `poetry` for dependency installation.
+  - `pip`: Activates the virtual environment and runs `pip install -r requirements.txt`.
+  - `poetry`: Runs `poetry install` directly in the project directory.
 - **Django Support:** Executes `python manage.py migrate`.
 - **Flask/Alembic Support:** Checks for the existence of `alembic.ini` and executes `alembic upgrade head` if found.
 - **Web App Reload:** Reloads the web application after deployment.
@@ -17,7 +19,7 @@ This is a custom GitHub Action to automate the re-deployment process for Python-
 
 Before using this action, make sure your PythonAnywhere account is properly configured:
 
-1. Create an API Token
+### 1. Create an API Token
 
 The API token is required to allow the GitHub Action to communicate with your PythonAnywhere account.
 
@@ -27,7 +29,7 @@ Click “Create a new API token” (if one doesn’t already exist).
 
 Copy this token and store it as a GitHub secret (e.g., PA_API_TOKEN).
 
-2. Configure SSH Access to GitHub
+### 2. Configure SSH Access to GitHub
 
 The action executes a git pull on your PythonAnywhere account, so SSH access must be configured:
 
@@ -41,7 +43,7 @@ cat ~/.ssh/id_rsa.pub
 Copy the key and add it to your GitHub repository under
 Settings → Deploy keys → Add deploy key (check Allow write access if necessary).
 
-3. Create a Virtual Environment
+### 3. Create a Virtual Environment
 
 Your app should use a dedicated virtual environment for isolated dependencies.
 
@@ -55,7 +57,7 @@ workon env
 Make sure your Web App on PythonAnywhere is configured to use this virtualenv under:
 Web → Virtualenv path.
 
-4. Keep a Bash Console Open
+### 4. Keep a Bash Console Open
 
 Keep at least one Bash console open and active in your PythonAnywhere account.
 This is required because the PythonAnywhere API does not actually start console processes — it can only reference existing ones.
@@ -69,6 +71,16 @@ In practice, this means:
 - You must manually open a Bash console from the PythonAnywhere Dashboard → Consoles → Start a new console → Bash.
 
 - The console process must stay active (do not close it).
+
+### 5. Using Poetry
+
+PythonAnywhere already provides Poetry pre-installed (currently version **1.8.4**).
+
+To avoid compatibility issues with your `pyproject.toml` and `poetry.lock`, it is **strongly recommended** to use the same Poetry version in your local environment:
+
+```bash
+pip install poetry==1.8.4
+```
 
 ## Usage
 
@@ -90,7 +102,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Re-Deploy WebApp on PythonAnywhere
-        uses: kazluBR/pythonanywhere-redeploy-action@v1.0.0
+        uses: kazluBR/pythonanywhere-redeploy-action@v1.2.0
         with:
           host: "www.pythonanywhere.com"                        # Required
           username: ${{ secrets.PA_USERNAME }}                  # Required
@@ -98,6 +110,7 @@ jobs:
           domain_name: your-application.pythonanywhere.com      # Optional, gets first webapp
           framework_type: "django" or "flask"                   # Optional, defaults to django
           django_settings: "my_project.settings.production"     # Optional
+          dependency_manager: "pip" or "poetry"                 # Optional, defaults to pip
           envs: |                                               # Optional, multi-line string of environment variables
             DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
             DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
@@ -106,12 +119,13 @@ jobs:
 
 ## Inputs
 
-| Name              | Description                                                                                                                                                                                                      | Required | Default                  |
-| :---------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- | :----------------------- |
-| `host`            | PythonAnywhere host (EU/US), e.g., `eu.pythonanywhere.com` or `www.pythonanywhere.com`.                                                                                                                          | Yes      |                          |
-| `username`        | PythonAnywhere username.                                                                                                                                                                                         | Yes      |                          |
-| `api_token`       | PythonAnywhere API token.                                                                                                                                                                                        | Yes      |                          |
-| `domain_name`     | Domain name of the web app to be reloaded.                                                                                                                                                                       | No       | The first web app found. |
-| `framework_type`  | Application framework type.                                                                                                                                                                                      | No       | `django`                 |
-| `django_settings` | Custom Django settings module to be used for `manage.py` commands (e.g., `manage.py migrate --settings=...`).                                                                                                    | No       |                          |
-| `envs`            | Multi-line string of environment variables (KEY=VALUE) to be written to a `.env` file in the application's source directory on PythonAnywhere. **Use the `env` context or a multi-line string to pass secrets.** | No       |                          |
+| Name                 | Description                                                                                                                                                                                                      | Required | Default                  |
+| :------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- | :----------------------- |
+| `host`               | PythonAnywhere host (EU/US), e.g., `eu.pythonanywhere.com` or `www.pythonanywhere.com`.                                                                                                                          | Yes      |                          |
+| `username`           | PythonAnywhere username.                                                                                                                                                                                         | Yes      |                          |
+| `api_token`          | PythonAnywhere API token.                                                                                                                                                                                        | Yes      |                          |
+| `domain_name`        | Domain name of the web app to be reloaded.                                                                                                                                                                       | No       | The first web app found. |
+| `framework_type`     | Application framework type.                                                                                                                                                                                      | No       | `django`                 |
+| `django_settings`    | Custom Django settings module to be used for `manage.py` commands (e.g., `manage.py migrate --settings=...`).                                                                                                    | No       |                          |
+| `dependency_manager` | Dependency manager to use (`pip` or `poetry`).                                                                                                                                                                   | No       | `pip`                    |
+| `envs`               | Multi-line string of environment variables (KEY=VALUE) to be written to a `.env` file in the application's source directory on PythonAnywhere. **Use the `env` context or a multi-line string to pass secrets.** | No       |                          |

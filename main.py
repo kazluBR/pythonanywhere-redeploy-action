@@ -17,6 +17,7 @@ def run():
         domain_name = get_input("domain_name", required=False)
         framework_type = get_input("framework_type", required=False, default="django")
         django_settings = get_input("django_settings", required=False)
+        dependency_manager = get_input("dependency_manager", required=False, default="pip")
         envs_string = get_input("envs", required=False)
 
         client = PythonAnywhereClient(username, api_token, host)
@@ -82,7 +83,8 @@ def run():
                 client,
                 console_id,
                 web_app,
-                django_settings=django_settings
+                django_settings=django_settings,
+                dependency_manager=dependency_manager
             )
             framework_executor.run_commands()
 
